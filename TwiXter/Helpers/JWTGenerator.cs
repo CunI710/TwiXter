@@ -7,10 +7,12 @@ namespace TwiXter.Helpers
 {
     public class JWTGenerator
     {
-        public static string GenerateToken(string login)
+        public static string GenerateToken(string login,string email)
         {
 
-            var claims = new List<Claim> { new Claim(ClaimTypes.Name, login) };
+            var claims = new List<Claim> { new Claim(ClaimTypes.Name, login),
+                                           new Claim(ClaimTypes.Email, email)
+            };
             // создаем JWT-токен
             var jwt = new JwtSecurityToken(
                     issuer: AuthOptions.ISSUER,

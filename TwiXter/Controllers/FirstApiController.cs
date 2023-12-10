@@ -21,7 +21,7 @@ namespace TwiXter.ApiControllers
 
             if (user != null)
             {
-                return BadRequest(new { message = "Уже есть такой" });
+                return BadRequest(new { message = "Пользователь с такой почтой уже существует" });
             }
 
             user = new User(register);
@@ -37,7 +37,7 @@ namespace TwiXter.ApiControllers
             User? user = db.Users.FirstOrDefault(u => u.Email == login.Email && u.PasswordHash == HashHelper.ToHash(login.Password));
             if(user == null)
             {
-                return BadRequest(new { message = "пользователь не найден" });
+                return BadRequest(new { message = "Почта или пароль введены неправильно" });
             }
             return Ok(new UserResponse(user));
         }
@@ -48,6 +48,58 @@ namespace TwiXter.ApiControllers
         {
             var users = db.Users.ToList();
             return Ok(users);
+        }
+
+    }
+
+
+    [ApiController]
+    [Route("api/[controller]")]
+    public class CommentController : ControllerBase
+    {
+        [Authorize]
+        [HttpPost("create")]
+        public IActionResult Create(CommentRequest commentRequest,ApplicationContext db)
+        {
+            User? user = db.Users.FirstOrDefault(u => u.Email == commentRequest.UserEmail);
+            if (user == null)   return NotFound();
+
+            Comment comment = new Comment(commentRequest,user);
+            db.Comments.Add(comment);
+            db.SaveChanges();
+
+            string? baseUserLogin = null;
+            if (commentRequest.BaseCommentId != null)
+            {
+                Comment? baseComment = db.Comments.FirstOrDefault(c => c.Id == commentRequest.BaseCommentId);
+                User? baseUser = db.Users.FirstOrDefault(u => u.Id == baseComment!.UserId);
+                baseUserLogin = baseUser.Login;
+            }
+
+            CommentResponse commentResponse = new CommentResponse(comment, baseUserLogin);
+
+            return Ok(commentResponse);
+        }
+
+        [HttpGet("getall")]
+        public IActionResult GetAll(ApplicationContext db)
+        {
+
+            List<Comment> comments = (from c in db.Comments.ToList()
+                                     join u in db.Users.ToList() on c.User.Id equals u.Id
+                                     select c).ToList();
+            List<CommentResponse> response = comments.Select(c=>new CommentResponse(c)).ToList();
+
+            response.ForEach(c =>
+            {
+                c.SubComments = response.Where(t => {
+                    t.BaseUserLogin = c.UserLogin;
+                    return t.BaseCommentId == c.Id;
+                    }).ToList();
+            });
+
+
+            return Ok(response.Where(r=>r.BaseCommentId==null));
         }
 
     }

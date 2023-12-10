@@ -7,9 +7,12 @@ namespace TwiXter.ResponseModels
     {
         public UserResponse(User user) {
             Login = user.Login;
-            Token = JWTGenerator.GenerateToken(user.Login);
+            Email = user.Email;
+            Token = JWTGenerator.GenerateToken(user.Login,user.Email);
+            
         }
         public string? Login { get; set; }
+        public string? Email { get; set; }
         public string? Token { get; set; }
     }
 }
