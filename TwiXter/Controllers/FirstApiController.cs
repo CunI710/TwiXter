@@ -90,12 +90,10 @@ namespace TwiXter.ApiControllers
                                      select c).ToList();
             List<CommentResponse> response = comments.Select(c=>new CommentResponse(c)).ToList();
 
-            response.ForEach(c =>
-            {
-                c.SubComments = response.Where(t => {
-                    t.BaseUserLogin = c.UserLogin;
-                    return t.BaseCommentId == c.Id;
-                    }).ToList();
+            response.ForEach(c => {
+                var result = response.Where(t => t.BaseCommentId == c.Id).ToList();
+                result.ForEach(r => r.BaseUserLogin = c.UserLogin);
+                c.SubComments = result;
             });
 
 

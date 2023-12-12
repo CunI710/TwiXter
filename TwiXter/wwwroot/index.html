@@ -9,20 +9,43 @@
 </head>
 <body>
     <header>
-        <div class="container">
-            <div class="row justify-content-center align-items-center g-2">
-                <div class="text-center user-unlogin">
-                    <p>Hello World!</p>
+        <nav class="navbar navbar-expand-sm navbar-light bg-light">
+            <div class="container">
+                <div class="collapse navbar-collapse" id="userUnlogin">
+                    <div class="text-center">
+                        <p>Hello World!</p>
+                    </div>
+                    <ul class="navbar-nav me-auto mt-2 mt-lg-0"></ul>
+                    <ul class="navbar-nav">
+                        <li class="nav-item">
+                            <label for="asd">Email</label>
+                            <input type="text" id="email">
+                            <label for="">Пароль</label>
+                            <input type="text" id="password">
+                            <button id="login">Войти</button>
+                            <button onclick="window.location.href = 'register.html'">Зарегистрироваться</button>
+                        </li>
+                    </ul>
                 </div>
-                <div class="text-center user-login" style="display: none;">
-                    <p>Hello Mr.<span class="log-in-nickName"></span>!</p>
+                <!--  navbar-collapse -->
+                <div class="collapse" id="userLogin">
+                    <div class="text-center">
+                        <p>Hello Mr.<span id="loginNickName"></span>!</p>
+                    </div>
+                    <ul class="navbar-nav me-auto mt-2 mt-lg-0"></ul>
+                    <button id="unLogin">Выйти</button>
                 </div>
+
             </div>
-        </div>
+        </nav>
     </header>
     <div class="container">
-        <div class="be-comment-block">
-            <div class="be-comment">
+            <div class="text-center">
+                <input id="greatComment">
+                <button onclick="respondComment('greatComment')">Написать комментарий</button>
+            </div>
+        <div class="be-comment-block" id="greatCommentSubComments">
+            <!-- <div class="be-comment">
                 <div class="be-comment-content">
 
                     <span class="be-comment-name">
@@ -31,10 +54,7 @@
 
                     </span>
                     <span class="be-comment-time">
-                        <i class="fa fa-clock-o"></i>
-
-                        May 27, 2015 at 3:14am
-                    
+                        <i>May 27, 2015 at 3:14am</i>
                     </span>
 
                     <p class="be-comment-text">
@@ -42,29 +62,171 @@
                         Pellentesque gravida tristique ultrices.
                         Sed blandit varius mauris, vel volutpat urna hendrerit id.
                         Curabitur rutrum dolor gravida turpis tristique efficitur.
-                    
+
                     </p>
                     <div class="subComments">
                     </div>
                 </div>
-            </div>
+            </div> -->
         </div>
     </div>
 
     <script>
         const JWToken = "localJWtoken";
         const email = "localEmail";
+        const nickName = "localNickName";
 
         const checkAuth = () => {
 
             if (localStorage.getItem(JWToken) != null) {
 
-                document.getElementById("user-unlogin").style.display = "none";
-                document.getElementById("user-login").style.display = "block";
+                document.getElementById("userUnlogin").classList.remove("navbar-collapse");
+                document.getElementById("userLogin").classList.add("navbar-collapse");
+                document.getElementById("loginNickName").textContent = localStorage.getItem(nickName);
+
+            }
+            else {
+                document.getElementById("userUnlogin").classList.add("navbar-collapse");
+                document.getElementById("userLogin").classList.remove("navbar-collapse");
+                document.getElementById("loginNickName").textContent = "";
 
             }
 
         }
+
+
+        const setBeCommentsBlock = (comments) => {
+            const beCommentBlock = document.getElementById("greatCommentSubComments");
+
+            comments.forEach(comment => beCommentBlock.append(setBeComment(comment)));
+        }
+
+        const setBeComment = (comment) => {
+
+
+            const beComment = document.createElement("div");
+            beComment.className = "be-comment";
+
+            const beCommentContent = document.createElement("div");
+            beCommentContent.className = "be-comment-content";
+
+            const beCommentName = document.createElement("span");
+            beCommentName.className = "be-comment-name";
+            beCommentName.append(comment.userLogin)
+
+            const beCommentTime = document.createElement("span");
+            beCommentTime.className = "be-comment-time";
+            beCommentTime.append(comment.createDate)
+
+            const beCommentText = document.createElement("p");
+            beCommentText.className = "be-comment-text";
+            beCommentText.append(comment.baseUserLogin == null ? comment.text : comment.baseUserLogin + ", " + comment.text);
+
+            const respondText = document.createElement("input");
+            respondText.id = String(comment.id);
+
+            const respondButton = document.createElement("button");
+            respondButton.addEventListener("click", async () => await respondComment(comment.id));
+            respondButton.textContent = "Написать";
+
+            const subComments = document.createElement("div");
+            subComments.id = String(comment.id) + "SubComments";
+            
+            if(comment.subComments!=null){
+                comment.subComments.forEach(subComment => subComments.append(setBeComment(subComment)));
+            }
+
+            beCommentContent.appendChild(beCommentName);
+            beCommentContent.appendChild(beCommentTime);
+            beCommentContent.appendChild(beCommentText);
+            beCommentContent.appendChild(respondText);
+            beCommentContent.appendChild(respondButton);
+            beCommentContent.appendChild(subComments);
+
+            beComment.appendChild(beCommentContent);
+
+            return beComment;
+        }
+
+        const respondComment = async (commentId) => {
+
+            if (localStorage.getItem(JWToken) == null) {
+                window.location.href = "login.html";
+            }
+            else {
+              
+                const commentText = document.getElementById(String(commentId)).value;
+
+                const baseCommentId = commentId == "greatComment" ? null : commentId;
+                if (commentText != "") {
+                    const response = await fetch("api/comment/create", {
+                        method: "POST",
+                        headers: {
+                            "Accept": "application/json",
+                            "Content-Type": "application/json",
+                            "Authorization": "Bearer " + localStorage.getItem(JWToken)
+                        },
+
+                        body: JSON.stringify({
+                            baseCommentId: baseCommentId,
+                            text: commentText,
+                            userEmail: localStorage.getItem(email)
+                        })
+
+                    });
+
+                    if (response.ok) {
+                        comment = await response.json();
+                        subComments = document.getElementById(String(commentId) + "SubComments");
+                        subComments.append(setBeComment(comment));
+
+                    }
+                    else {
+                        console.log("loh");
+                    }
+                }
+                document.getElementById(String(commentId)).value = "";
+            }
+        }
+
+
+        document.getElementById("login").addEventListener("click", async () => {
+
+            const emailResponse = document.getElementById("email").value;
+            const passwordResponse = document.getElementById("password").value;
+            if (emailResponse != "" || passwordResponse != "") {
+                const response = await fetch("api/user/login", {
+                    method: "POST",
+                    headers: { "Accept": "application/json", "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        email: emailResponse,
+                        password: passwordResponse
+                    })
+                });
+                if (response.ok) {
+                    user = await response.json();
+
+                    localStorage.setItem(JWToken, user.token);
+                    localStorage.setItem(email, user.email);
+                    localStorage.setItem(nickName, user.login);
+
+                    checkAuth();
+                }
+                else {
+                    console.log("loh");
+                }
+            }
+
+        });
+
+        document.getElementById("unLogin").addEventListener("click", async () => {
+            localStorage.removeItem(JWToken);
+            localStorage.removeItem(email);
+            localStorage.removeItem(nickName);
+            checkAuth();
+        });
+
+
         const getAllComments = async () => {
             const response = await fetch("api/comment/getall", {
                 method: "GET",
@@ -72,6 +234,7 @@
             });
             if (response.ok) {
                 const comments = await response.json();
+                setBeCommentsBlock(comments);
                 comments.forEach(element => console.log(element));
             }
             else {

@@ -9,29 +9,54 @@
 </head>
 <body>
 
-    <div class="container">
-        <div class="row justify-content-center align-items-center g-2">
-            <div class="col-2">
-                <form action="api/user/register" method="POST">
-                    <div>
-                        <p>Email</p>
-                        <input name="email" type="text">
-                    </div>
-                    <div>
-                        <p>Nickname</p>
-                        <input name="nickname" type="text">
-                    </div>
-                    <div>
-                        <p>Password</p>
-                        <input name="password" type="text">
-                    </div>
-                    <div>
-                        <input type="submit">
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
+    <label>Никнейм</label>
+    <input id="nickName">
+    <label>Email</label>
+    <input id="email">
+    <label>Пароль</label>
+    <input id="password">
+    <button id="register">Зарегистрироваться</button>
+
+    <script>
+
+
+        const JWToken = "localJWtoken";
+        const email = "localEmail";
+        const nickName = "localNickName";
+
+        document.getElementById("register").addEventListener("click", async () => {
+
+            const emailResponse = document.getElementById("email").value;
+            const nickNameResponse = document.getElementById("nickName").value;
+            const passwordResponse = document.getElementById("password").value;
+
+            if (emailResponse != "" || passwordResponse != "" || nickNameResponse != "") {
+                const response = await fetch("api/user/register", {
+                    method: "POST",
+                    headers: { "Accept": "application/json", "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        login: nickNameResponse,
+                        email: emailResponse,
+                        password: passwordResponse
+                    })
+                });
+                if (response.ok) {
+                    user = await response.json();
+
+                    localStorage.setItem(JWToken, user.token);
+                    localStorage.setItem(email, user.email);
+                    localStorage.setItem(nickName, user.login);
+
+                    window.location.href = "/";
+                }
+                else {
+                    console.log("loh");
+                }
+            }
+
+        });
+    </script>
+
 
 </body>
 </html>

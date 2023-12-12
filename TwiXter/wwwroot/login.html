@@ -2,9 +2,56 @@
 <html>
 <head>
     <meta charset="utf-8" />
-    <title></title>
+    <title>login</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-+0n0xVW2eSR5OomGNYDnhzAbDsOXxcvSN1TPprVMTNDbiYZCxYbOOl7+AMvyTG2x" crossorigin="anonymous">
+
+    <link href="css/style.css" rel="stylesheet" type="text/css">
 </head>
 <body>
 
+
+    <label>Email</label>
+    <input id="email">
+    <label>Пароль</label>
+    <input id="password">
+    <button id="login">Войти</button>
+
+    <script>
+
+
+        const JWToken = "localJWtoken";
+        const email = "localEmail";
+        const nickName = "localNickName";
+
+        document.getElementById("login").addEventListener("click", async () => {
+
+            const emailResponse = document.getElementById("email").value;
+            const passwordResponse = document.getElementById("password").value;
+            if (emailResponse != "" || passwordResponse != "") {
+                const response = await fetch("api/user/login", {
+                    method: "POST",
+                    headers: { "Accept": "application/json", "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        email: emailResponse,
+                        password: passwordResponse
+                    })
+                });
+                if (response.ok) {
+                    user = await response.json();
+
+                    localStorage.setItem(JWToken, user.token);
+                    localStorage.setItem(email, user.email);
+                    localStorage.setItem(nickName, user.login);
+
+
+                    window.location.href = "/";
+                }
+                else {
+                    console.log("loh");
+                }
+            }
+
+        });
+    </script>
 </body>
 </html>
